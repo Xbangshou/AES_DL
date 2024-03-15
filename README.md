@@ -4,7 +4,7 @@ The code in this section is exploration of different deep learning techniques on
 ### Little bit about Data:
 
 we used the Auto-mated Student Assessment Prize (ASAP) datasetby The Hewlett Foundation.  (Hewlett, 2012:  ac-cessed March 12, 2020) 
-This dataset consists ofessays written by students from 7th - 10th grade.The essays are divided into 8 sets.  Each set hasa prompt associated with it.  There are 2 types ofprompt Type 1: Persuasive / Narrative / ExpositoryType 2:  Source Dependent Responses.  The firsttype of prompt asks students to state their opinionabout certain topic.  The second type of prompthas a required reading associated with it and thestudents are expected to answer a question basedon their understanding of this reading.  Differentprompts have been graded by different number ofgraders. But each set has a domain 1 score, which
+This dataset consists of essays written by students from 7th - 10th grade.The essays are divided into 8 sets.  Each set has a prompt associated with it.  There are 2 types of prompt Type 1: Persuasive / Narrative / ExpositoryType 2:  Source Dependent Responses.  The first type of prompt asks students to state their opinionabout certain topic.  The second type of prompthas a required reading associated with it and thestudents are expected to answer a question basedon their understanding of this reading.  Differentprompts have been graded by different number ofgraders. But each set has a domain 1 score, which
  
  
 ### So what did we try:
