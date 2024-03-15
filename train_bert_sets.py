@@ -59,15 +59,15 @@ def train_bert_sets():
             max_len = max(max(len(i) for i in tokenized_train), max(len(i) for i in tokenized_test))
             padded_train = np.array([i + [0] * (max_len - len(i)) for i in tokenized_train.values])
             attention_mask_train = np.where(padded_train != 0, 1, 0)
-            train_input_ids = torch.tensor(padded_train, dtype=torch.long).to(cuda)
-            train_attention_mask = torch.tensor(attention_mask_train, dtype=torch.long).to(cuda)
+            train_input_ids = torch.tensor(padded_train).to(cuda)
+            train_attention_mask = torch.tensor(attention_mask_train).to(cuda)
             with torch.no_grad():
                 last_hidden_states_train = model(train_input_ids, attention_mask=train_attention_mask)
             train_features = last_hidden_states_train[0][:, 0, :].cpu().numpy()
             padded_test = np.array([i + [0] * (max_len - len(i)) for i in tokenized_test.values])
             attention_mask_test = np.where(padded_test != 0, 1, 0)
-            test_input_ids = torch.tensor(padded_test, dtype=torch.long).to(cuda)
-            test_attention_mask = torch.tensor(attention_mask_test, dtype=torch.long).to(cuda)
+            test_input_ids = torch.tensor(padded_test).to(cuda)
+            test_attention_mask = torch.tensor(attention_mask_test).to(cuda)
             with torch.no_grad():
                 last_hidden_states_test = model(test_input_ids, attention_mask=test_attention_mask)
             test_features = last_hidden_states_test[0][:, 0, :].cpu().numpy()
@@ -75,38 +75,15 @@ def train_bert_sets():
             test_x, test_y = test_features.shape
             trainDataVectors = np.reshape(train_features, (train_x, 1, train_y))
             testDataVectors = np.reshape(test_features, (test_x, 1, test_y))
-
-            # 使用半精度训练
             lstm_model = get_model(Hidden_dim1=Hidden_dim1, Hidden_dim2=Hidden_dim2,
                                    return_sequences=return_sequences,
                                    dropout=dropout, recurrent_dropout=recurrent_dropout, input_size=input_size,
                                    activation=activation,
                                    loss_function=loss_function, optimizer=optimizer, model_name=model_name)
-            lstm_model = lstm_model.to(cuda)
-            optimizer = torch.optim.Adam(lstm_model.parameters(), lr=1e-3)
-            scaler = torch.cuda.amp.GradScaler()
-            for epoch in range(epoch):
-                lstm_model.train()
-                for i in range(0, len(trainDataVectors), batch_size):
-                    batch_data = torch.tensor(trainDataVectors[i:i+batch_size], dtype=torch.float32).to(cuda)
-                    batch_labels = torch.tensor(y_train[i:i+batch_size], dtype=torch.float32).to(cuda)
-                    optimizer.zero_grad()
-                    with torch.cuda.amp.autocast():
-                        predictions = lstm_model(batch_data)
-                        loss = torch.nn.functional.mse_loss(predictions.flatten(), batch_labels)
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-                print("Epoch: {}, Loss: {}".format(epoch, loss.item()))
-
-            y_pred = []
-            lstm_model.eval()
-            with torch.no_grad():
-                for i in range(0, len(testDataVectors), batch_size):
-                    batch_data = torch.tensor(testDataVectors[i:i+batch_size], dtype=torch.float32).to(cuda)
-                    predictions = lstm_model(batch_data)
-                    y_pred.extend(predictions.cpu().numpy())
-
+            lstm_model.to(cuda)
+            history = lstm_model.fit(trainDataVectors, y_train, batch_size=batch_size, epochs=epoch)
+            plot_accuracy_curve(history)
+            y_pred = lstm_model.predict(testDataVectors)
             y_pred = np.around(y_pred)
             np.nan_to_num(y_pred)
             result = cohen_kappa_score(y_test.values, y_pred, weights='quadratic')
